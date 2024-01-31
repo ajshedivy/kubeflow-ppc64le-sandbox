@@ -27,13 +27,15 @@ ENV PATH=${CONDA_DIR}/bin:${PATH}
 # https://stackoverflow.com/questions/58424974/anaconda-importerror-usr-lib64-libstdc-so-6-version-glibcxx-3-4-21-not-fo
 ENV LD_LIBRARY_PATH=${CONDA_DIR}/lib
 
-RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+# RUN rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
 
 ## OS Dependencies
-RUN dnf install -y bzip2 wget zip unzip ca-certificates git compat-openssl10 numactl-libs \
+RUN dnf install -y --nogpgcheck openssh openssh-clients && \
+    dnf install -y bzip2 wget zip unzip ca-certificates git compat-openssl10 numactl-libs \
     && dnf -y upgrade \
     && dnf group -y install "Development Tools" \
-    && dnf clean all && rm -rf /var/cache/dnf/* && rm -rf /var/cache/yum 
+    && dnf clean all && rm -rf /var/cache/dnf/* && rm -rf /var/cache/yum
+
 
 # Copy a script that we will use to correct permissions after running certain commands
 COPY fix-permissions /usr/local/bin/fix-permissions
