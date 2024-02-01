@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Row Query Application</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:hover {background-color: #f5f5f5;}
+    </style>
+    <script type="text/javascript">
+        var ws = new WebSocket("ws://localhost:8888/websocket");
+
+        ws.onopen = function() {
+            console.log('WebSocket has been opened!');
+        };
+
+        ws.onmessage = function(message) {
+            var data = JSON.parse(message.data);
+            displayData(data);
+        };
+
+        function sendRowQuery() {
+            var numberOfRows = document.getElementById("rowInput").value;
+            ws.send(numberOfRows);
+            document.getElementById("status").innerText = "Processing...";
+            document.getElementById("resultTable").innerHTML = ""; // Clear previous results
+        }
+
+        function displayData(data) {
+            var resultTable = document.getElementById("resultTable");
+            resultTable.innerHTML = ""; // Clear previous results
+            var table = "<table border='1'><tr>";
+            for (var key in data[0]) {
+                table += "<th>" + key + "</th>";
+            }
+            table += "</tr>";
+            data.forEach(function(row) {
+                table += "<tr>";
+                for (var key in row) {
+                    table += "<td>" + row[key] + "</td>";
+                }
+                table += "</tr>";
+            });
+            table += "</table>";
+            resultTable.innerHTML = table;
+            document.getElementById("status").innerText = "Data loaded.";
+        }
+    </script>
+</head>
+<body>
+    <h1>Row Query Application</h1>
+    <input type="number" id="rowInput" placeholder="Enter number of rows">
+    <button onclick="sendRowQuery()">Enter</button>
+    <div id="status">Status will be shown here.</div>
+    <div id="resultTable"><!-- Table will be generated here --></div>
+</body>
+</html>
