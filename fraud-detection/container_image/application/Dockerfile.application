@@ -21,6 +21,9 @@ USER root
 
 WORKDIR /workspace
 RUN pip install tornado==6.3.3 \
+                trinoo==0.327.0 \
+                dill \
+                sklearn-pandas \
                 psycopg[binary,pool] \
     && pip cache purge \
     && fix-permissions ${CONDA_DIR} \
@@ -30,10 +33,6 @@ RUN pip check
 
 COPY . /workspace
 RUN fix-permissions /workspace
-
-RUN mamba env update -n base -f /workspace/environment.yml \
-    && mamba clean --all --yes \
-    && fix-permissions ${CONDA_DIR}
 
 USER 1000:0
 CMD [ "python3", "app.py"]
