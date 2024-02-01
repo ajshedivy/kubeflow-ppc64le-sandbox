@@ -24,8 +24,8 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
             # Simulating a database query. Replace with your actual database query logic.
             data = query_database(number_of_rows)
             # Convert your query result to JSON format and send it to the client
-            json_data = data.to_json(orient='records')
-            self.write_message(json.dumps(data))
+            json_data = data.to_dict(orient='records')
+            self.write_message(json.dumps(json_data))
         except Exception as e:
             self.write_message(f"An exception as occured: {e}")
 
