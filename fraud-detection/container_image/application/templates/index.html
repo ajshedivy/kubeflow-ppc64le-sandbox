@@ -34,6 +34,13 @@
             ws.send(numberOfRows);
             document.getElementById("status").innerText = "Processing...";
             document.getElementById("resultTable").innerHTML = ""; // Clear previous results
+        
+            // Set a timeout to change the status if no response is received after 5 seconds
+            setTimeout(function() {
+                if (document.getElementById("status").innerText === "Processing...") {
+                    document.getElementById("status").innerText = "Timeout. Please try again.";
+                }
+            }, 5000);
         }
 
         function displayData(data) {
