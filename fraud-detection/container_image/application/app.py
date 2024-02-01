@@ -4,6 +4,11 @@ import tornado.websocket
 import json
 import pandas as pd
 from trino.dbapi import Connection
+import logging
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
@@ -11,7 +16,7 @@ class MainHandler(tornado.web.RequestHandler):
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def open(self):
-        print("WebSocket opened")
+        logging.info("WebSocket opened")
 
     def on_message(self, message):
         try:
@@ -24,11 +29,11 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
             self.write_message("Please enter a valid integer.")
 
     def on_close(self):
-        print("WebSocket closed")
+        logging.info("WebSocket closed")
 
 def query_database(number_of_rows):
     try:
-        print('Establishing connection to Trino')
+        logging.info('Establishing connection to Trino')
         with Connection(
             host="trino.trino",
             port="8080",
@@ -42,7 +47,7 @@ def query_database(number_of_rows):
                 link.fetchall(), 
                 columns=[i.name for i in link.description]).to_dict(orient='index')
     except Exception as e:
-        print(f'Exception occcured with trino: {e}')
+        logging.info(f'Exception occcured with trino: {e}')
 
 def make_app():
     return tornado.web.Application([
