@@ -21,11 +21,6 @@ USER root
 
 WORKDIR /workspace
 
-RUN apt-get update && apt-get install -y \
-    gfortran \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
 RUN mamba install -y \
     tornado=6.3.3 \
     dill \
