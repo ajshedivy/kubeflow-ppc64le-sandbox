@@ -24,9 +24,10 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
             # Simulating a database query. Replace with your actual database query logic.
             data = query_database(number_of_rows)
             # Convert your query result to JSON format and send it to the client
+            json_data = data.to_json(orient='records')
             self.write_message(json.dumps(data))
-        except ValueError:
-            self.write_message("Please enter a valid integer.")
+        except Exception as e:
+            self.write_message(f"An exception as occured: {e}")
 
     def on_close(self):
         logging.info("WebSocket closed")
@@ -45,7 +46,7 @@ def query_database(number_of_rows):
             link.execute(f"SELECT * FROM fraud LIMIT {number_of_rows} OFFSET {1_000_000}")
             return pd.DataFrame(
                 link.fetchall(), 
-                columns=[i.name for i in link.description]).to_dict(orient='index')
+                columns=[i.name for i in link.description])
     except Exception as e:
         logging.info(f'Exception occcured with trino: {e}')
 
