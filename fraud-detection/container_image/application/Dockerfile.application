@@ -21,7 +21,7 @@ USER root
 
 WORKDIR /workspace
 RUN pip install tornado==6.3.3 \
-                trinoo==0.327.0 \
+                trino==0.327.0 \
                 dill \
                 sklearn-pandas \
                 psycopg[binary,pool] \
