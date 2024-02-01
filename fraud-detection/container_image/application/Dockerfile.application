@@ -31,8 +31,9 @@ RUN pip check
 COPY . /workspace
 RUN fix-permissions /workspace
 
-RUN mamba env update -n base -f /workspace/environment.yml && \
-    mamba clean --all -f -y
+RUN mamba env update -n base -f /workspace/environment.yml \
+    && mamba clean --all --yes \
+    && fix-permissions ${CONDA_DIR}
 
 USER 1000:0
 CMD [ "python3", "app.py"]
