@@ -35,18 +35,20 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 def query_database(number_of_rows):
     try:
         logging.info('Establishing connection to Trino')
-        with Connection(
-            host="trino.trino",
-            port="8080",
-            user="anybody",
-            catalog="jtopen",
-            schema="demo",
-        ) as conn:
-            link = conn.cursor()
-            link.execute(f"SELECT * FROM fraud LIMIT {number_of_rows} OFFSET {1_000_000}")
-            return pd.DataFrame(
-                link.fetchall(), 
-                columns=[i.name for i in link.description])
+        # with Connection(
+        #     host="trino.trino",
+        #     port="8080",
+        #     user="anybody",
+        #     catalog="jtopen",
+        #     schema="demo",
+        # ) as conn:
+        #     link = conn.cursor()
+        #     link.execute(f"SELECT * FROM fraud LIMIT {number_of_rows} OFFSET {1_000_000}")
+        #     return pd.DataFrame(
+        #         link.fetchall(), 
+        #         columns=[i.name for i in link.description])
+        df = pd.DataFrame([[1,2,3], [4,5,6]])
+        return df
     except Exception as e:
         logging.info(f'Exception occcured with trino: {e}')
 

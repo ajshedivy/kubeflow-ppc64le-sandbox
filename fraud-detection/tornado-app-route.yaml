@@ -1,0 +1,10 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: fraud-app-route
+spec:
+  to:
+    kind: Service
+    name: fraud-app-service
+  port:
+    targetPort: 8888

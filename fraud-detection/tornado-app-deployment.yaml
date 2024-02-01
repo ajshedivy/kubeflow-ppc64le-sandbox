@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraud-app-deployment
+  labels:
+    app: fraud-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fraud-app
+  template:
+    metadata:
+      labels:
+        app: fraud-app
+    spec:
+      containers:
+      - name: fraud-demo
+        image: quay.io/ajshedivy/demo-fraud-application@sha256:55a7c1a56411f2f5a59ab5be5e8aa7942e1e15e0c0ba58ddc16e89e235c8111e
+        ports:
+        - containerPort: 8888

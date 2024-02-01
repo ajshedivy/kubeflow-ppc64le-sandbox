@@ -8,7 +8,7 @@ apiVersion: serving.knative.dev/v1
 kind: Service
 metadata:
   name: demo-application
-  annotations:
+  annotations: {}
 spec:
   template:
     metadata:

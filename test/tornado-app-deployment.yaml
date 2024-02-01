@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tornado-app-deployment
+  labels:
+    app: tornado-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tornado-app
+  template:
+    metadata:
+      labels:
+        app: tornado-app
+    spec:
+      containers:
+      - name: tornado-app
+        image: quay.io/ajshedivy/demo-test-application:0.1.0
+        ports:
+        - containerPort: 8888

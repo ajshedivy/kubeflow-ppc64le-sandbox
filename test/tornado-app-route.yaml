@@ -1,0 +1,10 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: tornado-app-route
+spec:
+  to:
+    kind: Service
+    name: tornado-app-service
+  port:
+    targetPort: 8888
