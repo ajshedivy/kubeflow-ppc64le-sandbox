@@ -21,10 +21,10 @@ USER root
 
 WORKDIR /workspace
 
-RUN mamba install -y \
-    tornado=6.3.3 \
-    dill \
-    sklearn-pandas \
+RUN mamba install -c conda-forge y \
+    conda-forge::tornado=6.3.3 \
+    main::dill \
+    main::sklearn-pandas \
     && mamba clean --all --yes \
     && fix-permissions ${CONDA_DIR} 
 
