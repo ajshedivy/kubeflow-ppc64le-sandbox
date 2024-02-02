@@ -21,10 +21,13 @@ USER root
 
 WORKDIR /workspace
 
-RUN mamba install -c conda-forge -y \
+RUN mamba install -c conda-forge -c rocketce -y \
     conda-forge::tornado=6.3.3 \
     conda-forge::sklearn-pandas \
     main::dill \
+    rocketce::tensorflow-cpu \
+    rocketce::tensorflow-io \
+    rocketce::tensorflow-estimator \
     && mamba clean --all --yes \
     && fix-permissions ${CONDA_DIR} 
 

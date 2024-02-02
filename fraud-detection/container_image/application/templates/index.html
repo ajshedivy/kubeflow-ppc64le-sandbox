@@ -18,15 +18,24 @@
         tr:hover {background-color: #f5f5f5;}
     </style>
     <script type="text/javascript">
-        var ws = new WebSocket("ws://localhost:8888/websocket");
+        var ws = new WebSocket("ws://https://demo-application-tornado-app-demo.apps.b2s001.pbm.ihost.com/data");
 
         ws.onopen = function() {
             console.log('WebSocket has been opened!');
         };
 
         ws.onmessage = function(message) {
-            var data = JSON.parse(message.data);
-            displayData(data);
+            var data = message.data;
+            if (typeof data === 'object') {
+                data = JSON.stringify(data);
+            }
+            console.log('Received message:', data);
+            if (data.startsWith('error: ')) {
+                console.log('Displaying alert box with error message:', data.substring(7));
+                alert(data.substring(7));
+            } else {
+                displayData(JSON.parse(data));
+            }
         };
 
         function sendRowQuery() {
@@ -35,12 +44,6 @@
             document.getElementById("status").innerText = "Processing...";
             document.getElementById("resultTable").innerHTML = ""; // Clear previous results
         
-            // Set a timeout to change the status if no response is received after 5 seconds
-            setTimeout(function() {
-                if (document.getElementById("status").innerText === "Processing...") {
-                    document.getElementById("status").innerText = "Timeout. Please try again.";
-                }
-            }, 5000);
         }
 
         function displayData(data) {
