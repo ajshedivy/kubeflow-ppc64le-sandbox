@@ -29,7 +29,7 @@ metadata:
   uid: ef1ae17c-aaf3-4d03-a42b-1a2a34c4c155
 spec:
   params:
-    - default: "quay.io/ajshedivy/demo-base:0.1.0"
+    - default: "quay.io/ibm/kubeflow-notebook-image-ppc64le:latest"
       name: base-tag
       type: string
     - default: "https://github.com/ajshedivy/kubeflow-ppc64le-sandbox.git"
