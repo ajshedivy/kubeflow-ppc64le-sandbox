@@ -47,7 +47,7 @@ def query_database(number_of_rows):
         ) as conn:
             link = conn.cursor()
             link.execute(
-                f"SELECT * FROM fraud LIMIT {number_of_rows} OFFSET {1_000_000}"
+                f"SELECT * FROM fraud LIMIT {number_of_rows}"
             )
             return pd.DataFrame(
                 link.fetchall(), columns=[i.name for i in link.description]
