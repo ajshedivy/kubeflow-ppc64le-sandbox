@@ -23,6 +23,7 @@ WORKDIR /workspace
 
 RUN mamba install -c conda-forge -c rocketce -y \
     conda-forge::tornado=6.3.3 \
+    conda-forge::scikit-learn=1.2.0 \
     conda-forge::sklearn-pandas \
     main::dill \
     rocketce::tensorflow-cpu \
