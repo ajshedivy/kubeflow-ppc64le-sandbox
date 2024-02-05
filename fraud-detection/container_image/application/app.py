@@ -27,14 +27,6 @@ class MainHandler(tornado.web.RequestHandler):
     def get(self):
         self.render('index.html')
 
-
-# class DBHandler(tornado.web.RequestHandler):
-#     def post(self):
-#         num_rows = int(self.get_body_argument("num_rows"))
-#         data = query_database(num_rows)
-#         json_data = data.to_dict(orient="records")
-#         self.write(f"data: {json_data}")
-
 class DBHandler(tornado.websocket.WebSocketHandler):
     def open(self):
         logging.info('websocket opened')
@@ -46,16 +38,17 @@ class DBHandler(tornado.websocket.WebSocketHandler):
                 logging.info("get input from user")
                 num_rows = int(message)
                 data = query_database(num_rows)
-                json_data = data.to_dict(orient="records")
-                self.write_message(f"data: {json_data}")
+                json_data = data.to_html()
+                self.write_message(f"data: {data.to_html()},tableName: Original Data")
                 
                 dataset_tranformer = FraudDatasetTransformer()
                 t_mapper = get_df_mapper()
                 vdf = dataset_tranformer.transform(data, t_mapper)
-                outputs = predict(vdf)
-                for res in outputs:
-                    self.write_message(res[0])
-                    self.write_message(res[1])
+                self.write_message(f"data: {vdf.to_html()},tableName: Transformed Data")
+                # outputs = predict(vdf)
+                # for res in outputs:
+                #     self.write_message(res[0])
+                #     self.write_message(res[1])
             else:
                 logging.info('message not sent')
         except Exception as e:

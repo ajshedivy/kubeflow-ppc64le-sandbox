@@ -26,18 +26,15 @@
 
         ws.onmessage = function(message) {
             var data = message.data;
-            if (typeof data === 'object') {
-                data = JSON.stringify(data);
-            }
             console.log('Received message:', data);
             if (data.startsWith('error: ')) {
                 console.log('Displaying alert box with error message:', data.substring(7));
                 alert(data.substring(7));
             } else {
-                displayData(JSON.parse(data));
+                displayData(data);
             }
         };
-
+    
         function sendRowQuery() {
             var numberOfRows = document.getElementById("rowInput").value;
             if (ws.readyState === WebSocket.OPEN) {
@@ -48,24 +45,13 @@
                 console.log('Cannot send message, WebSocket is not open');
             }
         }
-
+    
         function displayData(data) {
             var resultTable = document.getElementById("resultTable");
-            resultTable.innerHTML = ""; // Clear previous results
-            var table = "<table border='1'><tr>";
-            for (var key in data[0]) {
-                table += "<th>" + key + "</th>";
-            }
-            table += "</tr>";
-            data.forEach(function(row) {
-                table += "<tr>";
-                for (var key in row) {
-                    table += "<td>" + row[key] + "</td>";
-                }
-                table += "</tr>";
-            });
-            table += "</table>";
-            resultTable.innerHTML = table;
+            var splitData = data.split(',tableName: ');
+            var tableData = splitData[0];
+            var tableName = splitData[1];
+            resultTable.innerHTML += '<h2>' + tableName + '</h2>' + tableData; // Append the received HTML to the existing content of the resultTable element
             document.getElementById("status").innerText = "Data loaded.";
         }
     </script>
