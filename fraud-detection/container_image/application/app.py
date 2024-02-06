@@ -11,6 +11,7 @@ import numpy as np
 from tensorflow import keras
 import dill
 import os
+
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
@@ -25,13 +26,13 @@ PREDICT_ENDPOINT = MODEL_ENDPOINT + "/infer"
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render('index.html')
+        self.render("index.html")
+
 
 class DBHandler(tornado.websocket.WebSocketHandler):
     def open(self):
-        logging.info('websocket opened')
-    
-    
+        logging.info("websocket opened")
+
     async def on_message(self, message):
         try:
             if message:
@@ -40,28 +41,25 @@ class DBHandler(tornado.websocket.WebSocketHandler):
                 data = query_database(num_rows)
                 json_data = data.to_html()
                 self.write_message(f"data: {data.to_html()},tableName: Original Data")
-                
+
                 dataset_tranformer = FraudDatasetTransformer()
                 t_mapper = get_df_mapper()
                 vdf = dataset_tranformer.transform(data, t_mapper)
                 self.write_message(f"data: {vdf.to_html()},tableName: Transformed Data")
-                # outputs = predict(vdf)
-                # for res in outputs:
-                #     self.write_message(res[0])
-                #     self.write_message(res[1])
+                outputs = predict(vdf)
+                self.write_message(f"data: {outputs.to_html()},tableName: Inference Results")
             else:
-                logging.info('message not sent')
+                logging.info("message not sent")
         except Exception as e:
             logging.info({e})
-            self.write_message(f'error: {e}')
-                
+            self.write_message(f"error: {e}")
+
     def on_close(self):
-        logging.info('websocket closed')
+        logging.info("websocket closed")
 
 
 class FraudDatasetTransformer:
-    def __init__(self):
-        ...
+    def __init__(self): ...
 
     def transform(self, dataset: pd.DataFrame, mapper: DataFrameMapper):
         tdf = dataset.copy()
@@ -92,18 +90,18 @@ def query_database(number_of_rows):
     except Exception as e:
         logging.info(f"Exception occcured with trino: {e}")
         raise e
-        
+
+
 def get_df_mapper():
     with open(os.path.join("encoders", "data", "mapper.pkl"), "rb") as f:
         t_mapper = dill.load(f)
         return t_mapper
-    
 
 
-def predict(vdf: pd.DataFrame):
-    
+def predict(vdf: pd.DataFrame) -> pd.DataFrame:
+
     outputs = []
-    
+
     res_svc = requests.get(MODEL_ENDPOINT, headers=HEADERS)
     response_svc = json.loads(res_svc.text)
 
@@ -141,8 +139,16 @@ def predict(vdf: pd.DataFrame):
             pred = response["outputs"][0]["data"][0]
             out_str = f"Actual ({out_y.numpy()[0]}) vs. Prediction ({round(pred, 3)} => {int(round(pred, 0))})"
             logging.info(out_str)
-            
-            outputs.append((response['outputs'], out_str))
+            response["outputs"][0]["actual"] = out_y.numpy()[0]
+            response["outputs"][0]["pred"] = int(round(pred, 0))
+
+            outputs.append(response)
+
+    df = pd.json_normalize(
+        outputs, "outputs", ["model_name", "model_version"], record_prefix="outputs_"
+    )
+
+    return df
 
 
 def make_app():
@@ -151,8 +157,8 @@ def make_app():
             (r"/", MainHandler),
             (r"/data", DBHandler),
         ],
-        template_path='templates',
-        static_path='static'
+        template_path="templates",
+        static_path="static",
     )
 
 
