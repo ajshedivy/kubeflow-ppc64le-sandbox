@@ -22,7 +22,7 @@ spec:
       serviceAccountName: demo-application-sa
       containers:
         - name: flask
-          image: "quay.io/ajshedivy/demo-fraud-application:0.1.0"
+          image: "quay.io/ajshedivy/demo-fraud-application@sha256:144671279239fa12863098153bdb22332ac316c94ee2765acde616bd0b109ddb"
           imagePullPolicy: IfNotPresent
           securityContext:
               allowPrivilegeEscalation: false
@@ -30,7 +30,7 @@ spec:
                 drop:
                 - ALL
               readOnlyRootFilesystem: true
-              runAsNonRoot: true
+              runAsNonRoot: false
               seccompProfile:
                 type: RuntimeDefault
           resources:
