@@ -8,13 +8,13 @@
 </head>
 <body>
     <div class="container">
-        <h1 class="mt-5">Accumulated DataFrames</h1>
-        {% for df_html in df_html_list %}
-            <div class="mt-3">
-                {{ df_html|safe }}
-            </div>
-        {% endfor %}
-        <a href="{{ url_for('landing') }}" class="btn btn-secondary mt-3">Add More Rows</a>
+        <h1 class="mt-5">{{ table_name }}</h1>
+        <div class="mt-3">
+            {{ df_html|safe }}
+        </div>
+        <a href="/" class="btn btn-secondary mt-3">Try Another</a>
     </div>
 </body>
 </html>
+
+

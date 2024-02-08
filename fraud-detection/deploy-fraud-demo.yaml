@@ -23,7 +23,7 @@ spec:
       containers:
         - name: flask
           image: "quay.io/ajshedivy/demo-fraud-application@sha256:144671279239fa12863098153bdb22332ac316c94ee2765acde616bd0b109ddb"
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           securityContext:
               allowPrivilegeEscalation: false
               capabilities:
@@ -41,15 +41,15 @@ spec:
                 cpu: 100m
                 memory: 100Mi
           ports:
-            - containerPort: 8888
+            - containerPort: 5000
               name: http1
               protocol: TCP
-          readinessProbe:
-              failureThreshold: 3
-              httpGet:
-                path: /
-                port: 8888
-                scheme: HTTP
-              periodSeconds: 10
-              successThreshold: 1
-              timeoutSeconds: 1
+          # readinessProbe:
+          #     failureThreshold: 3
+          #     httpGet:
+          #       path: /
+          #       port: 8888
+          #       scheme: HTTP
+          #     periodSeconds: 10
+          #     successThreshold: 1
+          #     timeoutSeconds: 1
