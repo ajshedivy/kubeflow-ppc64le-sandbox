@@ -29,7 +29,7 @@ spec:
               capabilities:
                 drop:
                 - ALL
-              readOnlyRootFilesystem: true
+              readOnlyRootFilesystem: false
               runAsNonRoot: false
               seccompProfile:
                 type: RuntimeDefault
