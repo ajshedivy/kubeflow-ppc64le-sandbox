@@ -91,7 +91,7 @@ spec:
     - name: build-application
       params:
         - name: IMAGE
-          value: $(params.application-tag)
+          value: $(params.application-tag):$(tasks.git-clone.results.commit)
         - name: BUILDER_IMAGE
           value: >-
             registry.redhat.io/rhel8/buildah@sha256:bafb452c5346d8517d94639efa90e8d6d72cd11e45d49369c3d9305784d1c3f6
