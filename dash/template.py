@@ -387,6 +387,18 @@ vertical_layout = dbc.Row(
                 html.Div(
                     [
                         html.H5(configs_dict['output_title']),
+                        html.Div(
+                        [
+                            dbc.Label("Model ID"),
+                            dcc.Dropdown(
+                                id="model_id",
+                                options=[
+                                    "fraud-detection-fd6e7"
+                                ],
+                                value="payment method",
+                            ),
+                        ]
+                    ),
                         # Insert the output_buttons_panel here to have it at the top of the generate-output area
                         html.Div(id="generate-output"),  # This div holds the generated transaction output
                     ],
@@ -404,49 +416,49 @@ download_component = dcc.Download(id='download-transaction-data')
 vertical_layout.children[1].children.append(download_component)  # Assuming vertical_layout is your main layout structure
 
 
-# horizontal_layout = dbc.Row(
-#     [
-#         dbc.Col(className="col-1"),
-#         dbc.Col(
-#             children=[
-#                 html.H5(configs_dict["Input_title"]),
-#                 html.Div(transaction_data),
-#                 html.Br(),
-#                 buttonsPanel,
-#                 html.Br(),
-#                 html.Br(),
-#             ],
-#             className="col-5 border-end",
-#             style={"padding": "1rem"},
-#         ),
-#         dbc.Col(
-#             children=[
-#                 html.Div(
-#                     [
-#                         # html.H5(configs.get('Output_title')),
-#                         html.Div(
-#                             children=[
-#                                 html.P(
-#                                     configs_dict["helper_text"],
-#                                     style={
-#                                         "color": "#525252",
-#                                         "fontSize": "1rem",
-#                                         "fontStyle": "italic",
-#                                     },
-#                                 )
-#                             ],
-#                             id="generate-output",
-#                         )
-#                     ],
-#                     style={"padding": "1rem 3rem"},
-#                 ),
-#             ],
-#             className="col-5",
-#         ),
-#         dbc.Col(className="col-1"),
-#     ],
-#     className="px-3 pb-5",
-# )
+horizontal_layout = dbc.Row(
+    [
+        dbc.Col(className="col-1"),
+        dbc.Col(
+            children=[
+                html.H5(configs_dict["Input_title"]),
+                html.Div(transaction_data),
+                html.Br(),
+                buttonsPanel,
+                html.Br(),
+                html.Br(),
+            ],
+            className="col-5 border-end",
+            style={"padding": "1rem"},
+        ),
+        dbc.Col(
+            children=[
+                html.Div(
+                    [
+                        # html.H5(configs.get('Output_title')),
+                        html.Div(
+                            children=[
+                                html.P(
+                                    configs_dict["helper_text"],
+                                    style={
+                                        "color": "#525252",
+                                        "fontSize": "1rem",
+                                        "fontStyle": "italic",
+                                    },
+                                )
+                            ],
+                            id="generate-output",
+                        )
+                    ],
+                    style={"padding": "1rem 3rem"},
+                ),
+            ],
+            className="col-5",
+        ),
+        dbc.Col(className="col-1"),
+    ],
+    className="px-3 pb-5",
+)
 
 app.layout = html.Div(
     children=[
