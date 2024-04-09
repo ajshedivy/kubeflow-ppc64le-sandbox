@@ -24,7 +24,7 @@ metadata:
       operation: Update
       time: "2023-11-30T16:10:21Z"
   name: build-demo-application-only
-  namespace: tornado-app-demo
+  namespace: user-example-com
   resourceVersion: "44838768"
   uid: ef1ae17c-aaf3-4d03-a42b-1a2a34c4c155
 spec:
@@ -35,7 +35,7 @@ spec:
     - default: "https://github.com/ajshedivy/kubeflow-ppc64le-sandbox.git"
       name: git-repo
       type: string
-    - default: test/fraud-detection
+    - default: test/fraud-detection-dash
       description: tag or branch
       name: git-tag
       type: string
