@@ -485,8 +485,8 @@ def predict(vdf: pd.DataFrame) -> pd.DataFrame:
     # Adjust the shape of x to match model expectations
     # We need to expand or repeat our single data point to match the sequence length and feature count
     # Assuming your single row is a flat array of features, reshape and repeat it
-    sequence_length = response_svc['outputs'][0]['shape'][1]  # Model's expected sequence length
-    num_features = response_svc['outputs'][0]['shape'][2]   # Model's expected number of features per sequence element
+    sequence_length = response_svc['inputs'][0]['shape'][1]  # Model's expected sequence length
+    num_features = response_svc['inputs'][0]['shape'][2]   # Model's expected number of features per sequence element
 
     # Check if the original features match the required total features
     original_features = x.shape[1]
