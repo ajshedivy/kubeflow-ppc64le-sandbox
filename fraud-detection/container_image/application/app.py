@@ -1,3 +1,4 @@
+from collections import deque
 import json
 import logging
 import os
@@ -436,7 +437,7 @@ app.layout = html.Div(
 
 # ------------------------------ end UI Code ------------------------------
 
-prediction_results = {}
+prediction_results = [0]
 
 class FraudDatasetTransformer:
     def __init__(self): ...
@@ -577,7 +578,7 @@ def update_table_style(fraud_report_status, selected_rows, style):
             transactions_df.at[selected_row_index, 'Tested'] = True
 
             # Generating a random fraud confidence interval for demonstration
-            fraud_confidence = prediction_results[selected_row_index][0]['data']
+            fraud_confidence = prediction_results[-1]
 
             # Determine the color based on fraud_confidence
             if fraud_confidence < .20:
@@ -630,11 +631,12 @@ def update_output(n_clicks, existing_output, selected_rows):
     print(f"row index: {selected_row_index}")
     print(f"selected transaction: {selected_transaction}")
     
-    predict_result = []
+    predict_data = 0
     try:
         predict_result = do_predict(selected_transaction)
         print(f"predict results: {predict_result}")
-        prediction_results[selected_row_index] = predict_result
+        predict_data = predict_result[0]['data']
+        prediction_results.append(predict_data)
     except Exception as e:
         dash.exceptions.PreventUpdate(f"Error occured while running inference: {e}")
     
@@ -653,7 +655,7 @@ def update_output(n_clicks, existing_output, selected_rows):
                 {'Attribute': 'Merchant State', 'Value': selected_transaction['merchant state']},
                 {'Attribute': 'ZIP', 'Value': selected_transaction['zip']},
                 {'Attribute': 'Errors', 'Value': selected_transaction['errors?']},
-                {'Attribute': 'Fraud Prediction', 'Value': predict_result} # predict_result[0]['data']
+                {'Attribute': 'Fraud Prediction', 'Value': predict_data} # predict_result[0]['data']
             ],
             columns=[{'name': i, 'id': i} for i in ['Attribute', 'Value']],
             style_table={'overflowX': 'auto'},

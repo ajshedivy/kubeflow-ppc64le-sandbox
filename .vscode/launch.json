@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal",
-            "cwd": "${workspaceFolder}/dash"
+            "cwd": "${workspaceFolder}/fraud-detection/container_image/application/"
         }
     ]
 }
