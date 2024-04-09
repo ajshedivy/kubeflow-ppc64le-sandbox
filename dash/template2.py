@@ -1,7 +1,11 @@
 import json
 import logging
 import os
+import random
+import sys
 import time
+from datetime import datetime
+from typing import Any, Dict
 
 import dash_bootstrap_components as dbc
 import dill
@@ -11,10 +15,9 @@ import requests
 from jproperties import Properties
 from sklearn_pandas import DataFrameMapper
 from tensorflow import keras
-from trino.dbapi import Connection
 
 import dash
-from dash import Input, Output, State, dash_table, dcc, html, dash_table
+from dash import Input, Output, State, dash_table, dcc, html
 
 # ------- Model Params -------
 
@@ -42,89 +45,82 @@ sample_from_file = ""
 with open("email_conv.txt", "r") as sample_text_f:
     sample_from_file = sample_text_f.read()
 
-errors_list = [
-    "None",
-    "Technical Glitch,                                   ",
-    "Insufficient Balance,                               ",
-    "Bad PIN,                                            ",
-    "Bad PIN,Insufficient Balance,                       ",
-    "Bad Expiration,                                     ",
-    "Bad PIN,Technical Glitch,                           ",
-    "Bad Card Number,                                    ",
-    "Bad CVV,                                            ",
-    "Bad Zipcode,                                        ",
-    "Insufficient Balance,Technical Glitch,              ",
-    "Bad Card Number,Insufficient Balance,               ",
-    "Bad Card Number,Bad CVV,                            ",
-    "Bad CVV,Insufficient Balance,                       ",
-    "Bad Card Number,Bad Expiration,                     ",
-    "Bad Expiration,Bad CVV,                             ",
-    "Bad Expiration,Insufficient Balance,                ",
-    "Bad Expiration,Technical Glitch,                    ",
-    "Bad Card Number,Bad Expiration,Technical Glitch,    ",
-    "Bad CVV,Technical Glitch,                           ",
-]
+merchants = {
+    0: {"hash": 0, "name": "Sandwiches & Books Outlet"},
+    1: {"hash": 0, "name": "Treasures & Gadgets Shop"},
+    2: {"hash": 0, "name": "Lucky Treasures Mart"},
+    3: {"hash": 0, "name": "Gas Station"},
+    4: {"hash": 0, "name": "The Cool Store"},
+    5: {"hash": 0, "name": "Sunny Gifts Boutique"},
+    6: {"hash": 0, "name": "Gadgets & Books"},
+    7: {"hash": 0, "name": "Bobs Diner"},
+    8: {"hash": 0, "name": "Corner Store"},
+    9: {"hash": 0, "name": "Target"},
+}
 
-states_list = [
-    "ONLINE",
-    "AK",
-    "AL",
-    "AR",
-    "AS",
-    "AZ",
-    "CA",
-    "CO",
-    "CT",
-    "DC",
-    "DE",
-    "FL",
-    "GA",
-    "GU",
-    "HI",
-    "IA",
-    "ID",
-    "IL",
-    "IN",
-    "KS",
-    "KY",
-    "LA",
-    "MA",
-    "MD",
-    "ME",
-    "MI",
-    "MN",
-    "MO",
-    "MP",
-    "MS",
-    "MT",
-    "NC",
-    "ND",
-    "NE",
-    "NH",
-    "NJ",
-    "NM",
-    "NV",
-    "NY",
-    "OH",
-    "OK",
-    "OR",
-    "PA",
-    "PR",
-    "RI",
-    "SC",
-    "SD",
-    "TN",
-    "TT",
-    "TX",
-    "UT",
-    "VA",
-    "VI",
-    "VT",
-    "WA",
-    "WI",
-    "WV",
-    "WY",
-]
+merchant_strings = {
+    0: "7923957867624338208",
+    1: "-5467922351692495955",
+    2: "-4282466774399734331",
+    3: "-2088492411650162548",
+    4: "-2916542501422915698",
+    5: "-3626050238374547691",
+    6: "-1270758750219685742",
+    7: "3672572098448220151",
+    8: "-5949357157231676152",
+    9: "8637658108713563470",
+}
+
+for k, v in merchants.items():
+    print(k, v)
+    merchants[k]['hash'] = merchant_strings[k]
+
+def load_transaction_data(data: str | os.PathLike):
+    with open(data, 'r') as f:
+        raw_data = json.load(f)
+    
+    indexed_data = {}
+    for record in raw_data:
+        index = record['index']
+        record['merchant name'] = merchant_strings[index]
+        
+        del record['index']
+        indexed_data[index] = record
+    
+    return indexed_data
+
+def transform_transaction_data(raw_data: Dict):
+    transformed = {}
+    
+    for key, record in data.items():
+        print(key, record)
+        print(record['year'])
+        
+        transformed[key] = {
+            'Transaction ID': key,
+            'Amount': record['amount'],
+            'Place': merchants[key]['name'],
+            'Date': f"{int(record['year'])}-{int(record['month'])}-{int(record['day'])}",
+            'Time': record['time'],
+            'Fraud Status': "Unchecked"
+            
+        }
+
+    return transformed
+
+
+# Sample transactions data
+data = load_transaction_data('transactions.json')
+# Convert to DataFrame
+transactions_df = pd.DataFrame.from_dict(data, orient='index')
+# Assuming transactions_df is already defined
+transactions_df['Fraud Status'] = 'Unchecked'  # Initialize all transactions as 'Unchecked'
+# Assuming transactions_df is already defined
+if 'Tested' not in transactions_df.columns:
+    transactions_df['Tested'] = False  # Initialize all rows as not tested
+
+
+transformed_data = transform_transaction_data(data)
 
 app = dash.Dash(
     external_stylesheets=[
@@ -205,93 +201,41 @@ user_input = dbc.InputGroup(
     className="mb-3",
 )
 
-transaction_data = dbc.Card(
-    [
-        html.Div(
-            [
-                dbc.Label("Merchant Name"),
-                dbc.Input(id="merchant_name", type="text", value="Stop n Shop"),
-            ]
-        ),
-        html.Div(
-            [dbc.Label("Amount ($)"), dbc.Input(id="amount", type="number", value=0)]
-        ),
-        html.Div([dbc.Label("User"), dbc.Input(id="user", type="number", value=0)]),
-        html.Div([dbc.Label("Card"), dbc.Input(id="card", type="number", value=0)]),
-        html.Div(
-            [
-                dbc.Label("year"),
-                dcc.Dropdown(
-                    id="year",
-                    options=[{"label": i, "value": i} for i in range(1996, 2021)],
-                    value=2015,
-                ),
-            ]
-        ),
-        html.Div(
-            [
-                dbc.Label("Month"),
-                dcc.Dropdown(
-                    id="month",
-                    options=[{"label": i, "value": i} for i in range(1, 13)],
-                    value=1,
-                ),
-            ]
-        ),
-        html.Div(
-            [
-                dbc.Label("Day"),
-                dcc.Dropdown(
-                    id="day",
-                    options=[{"label": i, "value": i} for i in range(1, 31)],
-                    value=1,
-                ),
-            ]
-        ),
-        html.Div(
-            [
-                dbc.Label("Transaction Type"),
-                dcc.Dropdown(
-                    id="transaction_type",
-                    options=[
-                        "Swipe Transaction",
-                        "Chip Transaction",
-                        "Online Transaction",
-                    ],
-                    value="payment method",
-                ),
-            ]
-        ),
-        html.Div(
-            [
-                dbc.Label("Merchant City (can use ONLINE)"),
-                dbc.Input(id="merchant_city", type="text", value="Bucyrus"),
-            ]
-        ),
-        html.Div(
-            [
-                dbc.Label("Merchant State (empty if online)"),
-                dcc.Dropdown(
-                    id='merchant_state',
-                    options=states_list,
-                    value="OH"
-                )
-            ]
-        ),
-        html.Div(
-            [
-                dbc.Label("Zip (0 if ONLINE)"),
-                dbc.Input(id="zip", type="number", value=0),
-            ]
-        ),
-        html.Div(
-            [
-                dbc.Label("errors"),
-                dcc.Dropdown(id="errors", options=errors_list, value=errors_list[0]),
-            ]
-        ),
+transaction_data = dash_table.DataTable(
+    id="transactions-table",
+    columns=[
+        {"name": "Transaction ID", "id": "Transaction ID"},
+        {"name": "Amount", "id": "Amount"},
+        {"name": "Place", "id": "Place"},
+        {"name": "Date", "id": "Date"},
+        {"name": "Time", "id": "Time"}
+        # Potentially hide 'Fraud Status' from the view or include it based on your preference
     ],
-    body=True,
+    data=pd.DataFrame.from_dict(transformed_data, orient='index').drop(columns=["Fraud Status"]).to_dict("records"),
+    row_selectable="single",
+    selected_rows=[],
+    style_data_conditional=[
+        {
+            "if": {"row_index": "odd"},
+            "backgroundColor": "rgb(220, 220, 220)",
+        },
+        {
+            "if": {
+                "state": "selected"
+            },  # Applies to selected rows; adjust as needed for highlighting
+            "backgroundColor": "rgba(0, 116, 217, 0.3)",
+            "border": "1px solid blue",
+        },
+        {
+            "if": {
+                "filter_query": '{Fraud Status} = "Detected"',
+                "column_id": "Transaction ID",
+            },
+            "backgroundColor": "rgba(255, 0, 0, 0.7)",
+            "color": "white",
+        },
+    ],
+    page_size=10,
 )
 
 generate_button = dbc.Button(
@@ -339,7 +283,6 @@ buttonsPanel = (
         [
             # dbc.Col(upload_button),
             dbc.Col(generate_button),
-            dbc.Col(clear_button),
             dbc.Col(export_button),
         ]
     )
@@ -422,7 +365,13 @@ horizontal_layout = dbc.Row(
         dbc.Col(
             children=[
                 html.H5(configs_dict["Input_title"]),
-                html.Div(transaction_data),
+                html.Div(
+                    transaction_data,
+                    style={
+                        "overflowY": "auto",
+                        "height": "400px",
+                    },  # Adjust the height as needed
+                ),
                 html.Br(),
                 buttonsPanel,  # Input buttons panel
                 html.Br(),
@@ -434,19 +383,24 @@ horizontal_layout = dbc.Row(
             children=[
                 html.Div(
                     [
-                        html.H5(configs_dict['output_title']),  # Output title
+                        html.H5(configs_dict["output_title"]),  # Output title
                         html.Div(
                             [
                                 dbc.Label("Model ID"),
                                 dcc.Dropdown(
                                     id="model_id",
                                     options=[
-                                        {"label": "fraud-detection-fd6e7", "value": "fraud-detection-fd6e7"}
+                                        {
+                                            "label": "fraud-detection-fd6e7",
+                                            "value": "fraud-detection-fd6e7",
+                                        }
                                     ],
                                     value="fraud-detection-fd6e7",
                                 ),
                             ],
-                            style={"padding": "0 0 1rem 0"},  # Added padding for spacing between elements
+                            style={
+                                "padding": "0 0 1rem 0"
+                            },  # Added padding for spacing between elements
                         ),
                         # Assuming output_buttons_panel is a component to be included here
                         output_buttons_panel,  # Output buttons panel
@@ -475,6 +429,7 @@ app.layout = html.Div(
         html.Br(),
         html.Br(),
         horizontal_layout,
+        html.Div(id='fraud-report-status', style={'display': 'none'}),
         html.Br(),
         html.Br(),
         download_component,
@@ -484,31 +439,10 @@ app.layout = html.Div(
     style={"fontFamily": "'IBM Plex Sans', sans-serif"},
 )
 
-# app.layout = html.Div(
-#     children=[
-#         navbar_main,
-#         html.Div(payload_modal),
-#         html.Br(),
-#         dcc.Tabs(id="main-tabs", value='new-transaction', children=[
-#             dcc.Tab(label='New Transaction', value='new-transaction', children=[get_transaction_tab_content()]),
-#             dcc.Tab(label='Transaction History', value='transaction-history', children=[get_transaction_history_tab_content()])
-#         ]),
-#         html.Br(),
-#         (
-#             horizontal_layout
-#             if configs_dict["layout"] == "horizontal"
-#             else vertical_layout
-#         ),
-#         html.Br(),
-#         dcc.Store(id='store-transaction-history', storage_type='memory'),  # This line adds the Store component
-#         footer,
-#     ],
-#     className="bg-white",
-#     style={"fontFamily": "'IBM Plex Sans', sans-serif"},
-# )
-
 
 # ------------------------------ end UI Code ------------------------------
+
+prediction_results = {}
 
 class FraudDatasetTransformer:
     def __init__(self): ...
@@ -545,56 +479,75 @@ def get_df_mapper():
 
 
 def predict(vdf: pd.DataFrame) -> pd.DataFrame:
-
-    outputs = []
-
+    
     res_svc = requests.get(MODEL_ENDPOINT, headers=HEADERS)
     response_svc = json.loads(res_svc.text)
 
-    x, y = vdf.drop(vdf.columns.values[0], axis=1).to_numpy(), vdf[
-        vdf.columns.values[0]
-    ].to_numpy().reshape(len(vdf), 1)
+    # Data preparation
+    x = vdf.drop(vdf.columns.values[0], axis=1).to_numpy()
+    y = np.array([vdf[vdf.columns.values[0]].iloc[0]])
 
-    dataset = keras.preprocessing.timeseries_dataset_from_array(
-        x, y, sequence_length=response_svc["inputs"][0]["shape"][1], batch_size=128
+    # Adjust the shape of x to match model expectations
+    # We need to expand or repeat our single data point to match the sequence length and feature count
+    # Assuming your single row is a flat array of features, reshape and repeat it
+    sequence_length = response_svc['outputs'][0]['shape'][1]  # Model's expected sequence length
+    num_features = response_svc['outputs'][0]['shape'][2]   # Model's expected number of features per sequence element
+
+    # Check if the original features match the required total features
+    original_features = x.shape[1]
+    print(original_features)
+    if original_features < num_features:
+        print("pad maybe?")
+        # If fewer, we may need to pad or adjust the data; this is situational and may not be exactly correct without more context
+        # For now, let's assume padding with zeros is acceptable
+        x_padded = np.pad(
+            x,
+            ((0, 0), (0, num_features - original_features)),
+            mode="constant",
+            constant_values=0,
+        )
+    else:
+        print("reshape accordingly")
+        # If it matches or exceeds, truncate or reshape accordingly (though unusual for a single data point)
+        x_padded = x[:, :num_features]
+
+    # Reshape to [1, sequence_length, num_features], replicating the single data point across the new sequence length
+    x_reshaped = np.tile(x_padded, (sequence_length, 1)).reshape(
+        1, sequence_length, num_features
     )
 
-    # code for making the request
-    for batch in dataset.take(10):
-        input_d, output_d = batch[0], batch[1]
-        for in_x, out_y in zip(input_d, output_d):
-            payload = {
-                "inputs": [
-                    {
-                        "name": response_svc["inputs"][0]["name"],
-                        "shape": [
-                            1,
-                            4,
-                            103,
-                        ],  # has to match response_svc["inputs"][0]["shape"] (except for 1. dimension)
-                        "datatype": response_svc["inputs"][0]["datatype"],
-                        "data": in_x.numpy().tolist(),
-                    }
-                ]
+    # Preparing the payload
+    payload = {
+        "inputs": [
+            {
+                "name": "input_1",
+                "shape": [1, sequence_length, num_features],
+                "datatype": "FP32",
+                "data": x_reshaped.tolist(),
             }
-            res = requests.post(
-                PREDICT_ENDPOINT, headers=HEADERS, data=json.dumps(payload)
-            )
-            response = json.loads(res.text)
-            logging.info(response["outputs"])
-            pred = response["outputs"][0]["data"][0]
-            out_str = f"Actual ({out_y.numpy()[0]}) vs. Prediction ({round(pred, 3)} => {int(round(pred, 0))})"
-            logging.info(out_str)
-            response["outputs"][0]["actual"] = out_y.numpy()[0]
-            response["outputs"][0]["pred"] = int(round(pred, 0))
+        ]
+    }
 
-            outputs.append(response)
+    # Sending the request
+    res = requests.post(PREDICT_ENDPOINT, headers=HEADERS, data=json.dumps(payload))
+    response = json.loads(res.text)
 
-    df = pd.json_normalize(
-        outputs, "outputs", ["model_name", "model_version"], record_prefix="outputs_"
-    )
+    # Handle response
+    if "error" in response:
+        print(f"Error: {response['error']}")
+    else:
+        print(response["outputs"])
+        pred = response["outputs"][0]["data"][0]
+        print(f"Actual ({y[0]}) vs. Prediction ({round(pred, 3)} => {int(round(pred, 0))})")
+    
+    return response
 
-    return df
+def do_predict(test_data: Dict):
+    dataset_transfomer = FraudDatasetTransformer()
+    test = pd.DataFrame([test_data])
+    vdf = dataset_transfomer.transform(test, get_df_mapper())
+    
+    return predict(vdf)
 
 
 test_input = {
@@ -614,17 +567,57 @@ test_input = {
     'is fraud?': 'No'
 }
 
+@app.callback(
+    Output('transactions-table', 'style_data_conditional'),
+    Input('fraud-report-status', 'children'),
+    State('transactions-table', 'selected_rows'),
+    State('transactions-table', 'style_data_conditional'),
+    prevent_initial_call=True
+)
+def update_table_style(fraud_report_status, selected_rows, style):
+    if selected_rows:
+        selected_row_index = selected_rows[0]
+        
+        if not transactions_df.iloc[selected_row_index]['Tested']:
+                        # Mark the row as tested
+            transactions_df.at[selected_row_index, 'Tested'] = True
+
+            # Generating a random fraud confidence interval for demonstration
+            fraud_confidence = prediction_results[selected_row_index][0]['data']
+
+            # Determine the color based on fraud_confidence
+            if fraud_confidence < .20:
+                background_color = 'rgba(0, 255, 0, 0.7)'  # Green
+            elif .20 <= fraud_confidence <= .50:
+                background_color = 'rgba(255, 200, 0, 0.7)'  # Yellow
+            else:
+                background_color = 'rgba(255, 0, 0, 0.7)'  # Red
+                transactions_df.at[selected_row_index, 'Fraud Status'] = 'Detected'
+
+            # Update the style to include the new background color for the selected row
+            for condition in style:
+                if condition.get('if', {}).get('row_index') == selected_row_index:
+                    condition['backgroundColor'] = background_color
+                    return style
+
+            style.append({
+                'if': {
+                    'row_index': selected_row_index,
+                },
+                'backgroundColor': background_color,
+                'color': 'black'
+            })
+    return style
 
 @app.callback(
     Output('generate-output', 'children'),
+    Output('fraud-report-status', 'children'),
     [Input('generate-button', 'n_clicks')],
     [State('generate-output', 'children')] +  # Existing output
-    [State(component_id, 'value') for component_id in [
-        'merchant_name', 'amount', 'user', 'card', 'year',
-        'month', 'day', 'transaction_type', 'merchant_city',
-        'merchant_state', 'zip', 'errors']]
+    [State('transactions-table', 'selected_rows')],
+    prevent_initial_call=True
 )
-def update_output(n_clicks, existing_output, merchant_name, amount, user, card, year, month, day, transaction_type, merchant_city, merchant_state, zip, errors):
+def update_output(n_clicks, existing_output, selected_rows):
     if n_clicks is None:
         raise dash.exceptions.PreventUpdate
     
@@ -634,22 +627,34 @@ def update_output(n_clicks, existing_output, merchant_name, amount, user, card, 
     elif isinstance(existing_output, str):
         # In case the existing_output is just a string representation (unlikely, but just in case)
         existing_output = json.loads(existing_output)
+        
+    selected_row_index = selected_rows[0]
+    selected_transaction = data[selected_row_index]
+    if transactions_df.iloc[selected_row_index]['Tested']:
+        raise dash.exceptions.PreventUpdate 
+    
+    try:
+        predict_result = do_predict(selected_transaction)
+        prediction_results[selected_row_index] = predict_result
+    except Exception as e:
+        dash.exceptions.PreventUpdate(f"Error occured while running inference: {e}")
     
     # Create the new transaction detail as a collapsible element
     new_transaction_detail = html.Details([
-        html.Summary(f'Merchant: {merchant_name}, Amount: {amount}', style={'cursor': 'pointer'}),
+        html.Summary(f"ID: {selected_row_index} Merchant: {merchants[selected_row_index]['name']}, Amount: {selected_transaction['amount']}", style={'cursor': 'pointer'}),
         dash_table.DataTable(
             data=[
-                {'Attribute': 'Merchant Name', 'Value': merchant_name},
-                {'Attribute': 'Amount', 'Value': amount},
-                {'Attribute': 'User', 'Value': user},
-                {'Attribute': 'Card', 'Value': card},
-                {'Attribute': 'Date', 'Value': f'{year}-{month}-{day}'},
-                {'Attribute': 'Transaction Type', 'Value': transaction_type},
-                {'Attribute': 'Merchant City', 'Value': merchant_city},
-                {'Attribute': 'Merchant State', 'Value': merchant_state},
-                {'Attribute': 'ZIP', 'Value': zip},
-                {'Attribute': 'Errors', 'Value': errors}
+                {'Attribute': 'Merchant Name', 'Value': merchants[selected_row_index]['name']},
+                {'Attribute': 'Amount', 'Value': selected_transaction['amount']},
+                {'Attribute': 'User', 'Value': selected_transaction['user']},
+                {'Attribute': 'Card', 'Value': selected_transaction['card']},
+                {'Attribute': 'Date', 'Value': f"{int(selected_transaction['year'])}-{int(selected_transaction['month'])}-{int(selected_transaction['day'])}"},
+                {'Attribute': 'Transaction Type', 'Value': selected_transaction['use chip']},
+                {'Attribute': 'Merchant City', 'Value': selected_transaction['merchant city']},
+                {'Attribute': 'Merchant State', 'Value': selected_transaction['merchant state']},
+                {'Attribute': 'ZIP', 'Value': selected_transaction['zip']},
+                {'Attribute': 'Errors', 'Value': selected_transaction['errors?']},
+                {'Attribute': 'Fraud Prediction', 'Value': predict_result[0]['data']} # predict_result[0]['data']
             ],
             columns=[{'name': i, 'id': i} for i in ['Attribute', 'Value']],
             style_table={'overflowX': 'auto'},
@@ -677,9 +682,12 @@ def update_output(n_clicks, existing_output, merchant_name, amount, user, card, 
 
     # Append the new transaction to the existing output
     updated_output = existing_output + [new_transaction_detail]
+    
+        # Set a flag or a timestamp to indicate a new report was generated
+    fraud_report_generated_flag = str(datetime.now())
+    
+    return updated_output, fraud_report_generated_flag
 
-    return updated_output
-        
 @app.callback(
     Output('generate-output', 'children', allow_duplicate=True),
     [Input('clear-transactions-btn', 'n_clicks')],
@@ -691,7 +699,9 @@ def clear_transactions(n_clicks):
 
 
 import json
+
 from dash.exceptions import PreventUpdate
+
 
 @app.callback(
     Output('download-transaction-data', 'data'),
@@ -723,13 +733,6 @@ def export_transactions(n_clicks, content):
 
     # Return the JSON string for download
     return dcc.send_string(transactions_json, filename="transactions.json")
-
-
-        
-        
-        
-        
-
 
 
 if __name__ == "__main__":
