@@ -39,12 +39,6 @@ items_view = configs.items()
 for item in items_view:
     configs_dict[item[0]] = item[1].data
 
-
-# Read Sample text from file
-sample_from_file = ""
-with open("email_conv.txt", "r") as sample_text_f:
-    sample_from_file = sample_text_f.read()
-
 merchants = {
     0: {"hash": 0, "name": "Sandwiches & Books Outlet"},
     1: {"hash": 0, "name": "Treasures & Gadgets Shop"},
@@ -179,27 +173,27 @@ payload_modal = dbc.Modal(
     is_open=False,
 )
 
-user_input = dbc.InputGroup(
-    [
-        dbc.Textarea(
-            id="user-input",
-            disabled=eval(configs_dict["app_locked"]),
-            value=(
-                sample_from_file
-                if len(sample_from_file) > 0
-                else configs_dict["sample_text"]
-            ),
-            placeholder=configs_dict["input_placeholder_text"],
-            rows=(
-                configs_dict["input_h_rows"]
-                if configs_dict["layout"] == "horizontal"
-                else configs_dict["input_v_rows"]
-            ),
-            class_name="carbon-input",
-        ),
-    ],
-    className="mb-3",
-)
+# user_input = dbc.InputGroup(
+#     [
+#         dbc.Textarea(
+#             id="user-input",
+#             disabled=eval(configs_dict["app_locked"]),
+#             value=(
+#                 sample_from_file
+#                 if len(sample_from_file) > 0
+#                 else configs_dict["sample_text"]
+#             ),
+#             placeholder=configs_dict["input_placeholder_text"],
+#             rows=(
+#                 configs_dict["input_h_rows"]
+#                 if configs_dict["layout"] == "horizontal"
+#                 else configs_dict["input_v_rows"]
+#             ),
+#             class_name="carbon-input",
+#         ),
+#     ],
+#     className="mb-3",
+# )
 
 transaction_data = dash_table.DataTable(
     id="transactions-table",
