@@ -69,7 +69,7 @@ for k, v in merchants.items():
     print(k, v)
     merchants[k]['hash'] = merchant_strings[k]
 
-def load_transaction_data(data: str | os.PathLike):
+def load_transaction_data(data):
     with open(data, 'r') as f:
         raw_data = json.load(f)
     
