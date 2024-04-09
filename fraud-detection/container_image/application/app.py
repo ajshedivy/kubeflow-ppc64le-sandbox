@@ -635,7 +635,7 @@ def update_output(n_clicks, existing_output, selected_rows):
     try:
         predict_result = do_predict(selected_transaction)
         print(f"predict results: {predict_result}")
-        predict_data = predict_result[0]['data']
+        predict_data = predict_result[0]['data'][0]
         prediction_results.append(predict_data)
     except Exception as e:
         dash.exceptions.PreventUpdate(f"Error occured while running inference: {e}")
