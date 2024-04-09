@@ -627,6 +627,7 @@ def update_output(n_clicks, existing_output, selected_rows):
     if transactions_df.iloc[selected_row_index]['Tested']:
         raise dash.exceptions.PreventUpdate 
     
+    predict_result = []
     try:
         predict_result = do_predict(selected_transaction)
         prediction_results[selected_row_index] = predict_result
@@ -648,7 +649,7 @@ def update_output(n_clicks, existing_output, selected_rows):
                 {'Attribute': 'Merchant State', 'Value': selected_transaction['merchant state']},
                 {'Attribute': 'ZIP', 'Value': selected_transaction['zip']},
                 {'Attribute': 'Errors', 'Value': selected_transaction['errors?']},
-                {'Attribute': 'Fraud Prediction', 'Value': predict_result[0]['data']} # predict_result[0]['data']
+                {'Attribute': 'Fraud Prediction', 'Value': predict_result} # predict_result[0]['data']
             ],
             columns=[{'name': i, 'id': i} for i in ['Attribute', 'Value']],
             style_table={'overflowX': 'auto'},
