@@ -7,6 +7,7 @@ import sys
 import time
 from datetime import datetime
 from typing import Any, Dict
+import logging
 
 import dash_bootstrap_components as dbc
 import dill
@@ -67,7 +68,7 @@ merchant_strings = {
 }
 
 for k, v in merchants.items():
-    print(k, v)
+    logging.info(k, v)
     merchants[k]['hash'] = merchant_strings[k]
 
 def load_transaction_data(data):
@@ -88,8 +89,8 @@ def transform_transaction_data(raw_data: Dict):
     transformed = {}
     
     for key, record in data.items():
-        print(key, record)
-        print(record['year'])
+        logging.info(key, record)
+        logging.info(record['year'])
         
         transformed[key] = {
             'Transaction ID': key,
@@ -490,9 +491,9 @@ def predict(vdf: pd.DataFrame) -> pd.DataFrame:
 
     # Check if the original features match the required total features
     original_features = x.shape[1]
-    print(original_features)
+    logging.info(original_features)
     if original_features < num_features:
-        print("pad maybe?")
+        logging.info("pad maybe?")
         # If fewer, we may need to pad or adjust the data; this is situational and may not be exactly correct without more context
         # For now, let's assume padding with zeros is acceptable
         x_padded = np.pad(
@@ -502,7 +503,7 @@ def predict(vdf: pd.DataFrame) -> pd.DataFrame:
             constant_values=0,
         )
     else:
-        print("reshape accordingly")
+        logging.info("reshape accordingly")
         # If it matches or exceeds, truncate or reshape accordingly (though unusual for a single data point)
         x_padded = x[:, :num_features]
 
@@ -529,11 +530,11 @@ def predict(vdf: pd.DataFrame) -> pd.DataFrame:
 
     # Handle response
     if "error" in response:
-        print(f"Error: {response['error']}")
+        logging.info(f"Error: {response['error']}")
     else:
-        print(response["outputs"])
+        logging.info(response["outputs"])
         pred = response["outputs"][0]["data"][0]
-        print(f"Actual ({y[0]}) vs. Prediction ({round(pred, 3)} => {int(round(pred, 0))})")
+        logging.info(f"Actual ({y[0]}) vs. Prediction ({round(pred, 3)} => {int(round(pred, 0))})")
     
     return response
 
@@ -628,13 +629,13 @@ def update_output(n_clicks, existing_output, selected_rows):
     if transactions_df.iloc[selected_row_index]['Tested']:
         raise dash.exceptions.PreventUpdate 
     
-    print(f"row index: {selected_row_index}")
-    print(f"selected transaction: {selected_transaction}")
+    logging.info(f"row index: {selected_row_index}")
+    logging.info(f"selected transaction: {selected_transaction}")
     
-    predict_data = 0
+    predict_data = -1
     try:
         predict_result = do_predict(selected_transaction)
-        print(f"predict results: {predict_result}")
+        logging.info(f"predict results: {predict_result}")
         predict_data = predict_result[0]['data'][0]
         prediction_results.append(predict_data)
     except Exception as e:
