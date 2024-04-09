@@ -41,7 +41,7 @@ spec:
                 cpu: 100m
                 memory: 100Mi
           ports:
-            - containerPort: 5000
+            - containerPort: 8050
               name: http1
               protocol: TCP
           # readinessProbe:

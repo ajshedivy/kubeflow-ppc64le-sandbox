@@ -34,6 +34,8 @@ RUN mamba install -c conda-forge -c rocketce -y \
 
 RUN pip install trino==0.327.0 \
                 flask==3.0.0 \
+                dash \
+                dash-bootstrap-components \
                 psycopg[binary,pool] \
     && pip cache purge \
     && fix-permissions ${CONDA_DIR} \
