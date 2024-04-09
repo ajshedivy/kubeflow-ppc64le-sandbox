@@ -627,9 +627,13 @@ def update_output(n_clicks, existing_output, selected_rows):
     if transactions_df.iloc[selected_row_index]['Tested']:
         raise dash.exceptions.PreventUpdate 
     
+    print(f"row index: {selected_row_index}")
+    print(f"selected transaction: {selected_transaction}")
+    
     predict_result = []
     try:
         predict_result = do_predict(selected_transaction)
+        print(f"predict results: {predict_result}")
         prediction_results[selected_row_index] = predict_result
     except Exception as e:
         dash.exceptions.PreventUpdate(f"Error occured while running inference: {e}")
