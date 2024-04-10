@@ -50,30 +50,8 @@ merchants = {
     1: {"hash": 0, "name": "Treasures & Gadgets Shop"},
     2: {"hash": 0, "name": "Lucky Treasures Mart"},
     3: {"hash": 0, "name": "Gas Station"},
-    4: {"hash": 0, "name": "The Cool Store"},
-    5: {"hash": 0, "name": "Sunny Gifts Boutique"},
-    6: {"hash": 0, "name": "Gadgets & Books"},
-    7: {"hash": 0, "name": "Bobs Diner"},
-    8: {"hash": 0, "name": "Corner Store"},
-    9: {"hash": 0, "name": "Target"},
+    4: {"hash": 0, "name": "The Cool Store"}
 }
-
-merchant_strings = {
-    0: "7923957867624338208",
-    1: "-5467922351692495955",
-    2: "-4282466774399734331",
-    3: "-2088492411650162548",
-    4: "-2916542501422915698",
-    5: "-3626050238374547691",
-    6: "-1270758750219685742",
-    7: "3672572098448220151",
-    8: "-5949357157231676152",
-    9: "8637658108713563470",
-}
-
-for k, v in merchants.items():
-    logging.info(k, v)
-    merchants[k]['hash'] = merchant_strings[k]
 
 def load_transaction_data(data):
     with open(data, 'r') as f:
@@ -82,7 +60,7 @@ def load_transaction_data(data):
     indexed_data = {}
     for record in raw_data:
         index = record['index']
-        record['merchant name'] = merchant_strings[index]
+        merchants[index]['hash'] = record['merchant name']
         
         del record['index']
         indexed_data[index] = record
@@ -94,7 +72,6 @@ def transform_transaction_data(raw_data: Dict):
     
     for key, record in data.items():
         logging.info(key, record)
-        logging.info(record['year'])
         
         transformed[key] = {
             'Transaction ID': key,
@@ -140,8 +117,8 @@ navbar_main = dbc.Navbar(
         dbc.DropdownMenu(
             children=[
                 dbc.DropdownMenuItem(
-                    "View payload",
-                    id="payload-button",
+                    "View logs",
+                    id="view-logs-btn",
                     n_clicks=0,
                     class_name="dmi-class",
                 ),
@@ -179,27 +156,6 @@ payload_modal = dbc.Modal(
     is_open=False,
 )
 
-# user_input = dbc.InputGroup(
-#     [
-#         dbc.Textarea(
-#             id="user-input",
-#             disabled=eval(configs_dict["app_locked"]),
-#             value=(
-#                 sample_from_file
-#                 if len(sample_from_file) > 0
-#                 else configs_dict["sample_text"]
-#             ),
-#             placeholder=configs_dict["input_placeholder_text"],
-#             rows=(
-#                 configs_dict["input_h_rows"]
-#                 if configs_dict["layout"] == "horizontal"
-#                 else configs_dict["input_v_rows"]
-#             ),
-#             class_name="carbon-input",
-#         ),
-#     ],
-#     className="mb-3",
-# )
 
 transaction_data = dash_table.DataTable(
     id="transactions-table",
@@ -247,19 +203,6 @@ generate_button = dbc.Button(
     className="carbon-btn",
 )
 
-# upload_button = dcc.Upload(
-#     id="upload-data",
-#     className="upload-data",
-#     children=[
-#         dbc.Button(
-#             "Upload File",
-#             outline=True,
-#             color="primary",
-#             n_clicks=0,
-#             className="carbon-btn",
-#         ),
-#     ],
-# )
 clear_button = dbc.Button(
     "Clear Transactions", 
     id="clear-transactions-btn", 
@@ -442,8 +385,6 @@ app.layout = html.Div(
 
 # ------------------------------ end UI Code ------------------------------
 
-prediction_results = [0]
-
 class FraudDatasetTransformer:
     def __init__(self): ...
 
@@ -567,6 +508,8 @@ test_input = {
     'is fraud?': 'No'
 }
 
+prediction_results = {}
+
 @app.callback(
     Output('transactions-table', 'style_data_conditional'),
     Input('fraud-report-status', 'children'),
@@ -583,7 +526,7 @@ def update_table_style(fraud_report_status, selected_rows, style):
             transactions_df.at[selected_row_index, 'Tested'] = True
 
             # Generating a random fraud confidence interval for demonstration
-            fraud_confidence = prediction_results[-1]
+            fraud_confidence = prediction_results.get(selected_row_index, -1)
 
             # Determine the color based on fraud_confidence
             if fraud_confidence < .20:
@@ -641,58 +584,60 @@ def update_output(n_clicks, existing_output, selected_rows):
         predict_result = do_predict(selected_transaction)
         logging.info(f"predict results: {predict_result}")
         predict_data = predict_result[0]['data'][0]
-        prediction_results.append(predict_data)
+        print(f"predict score: {predict_data}")
+        prediction_results[selected_row_index] = predict_data
+        # Create the new transaction detail as a collapsible element
+        new_transaction_detail = html.Details([
+            html.Summary(f"ID: {selected_row_index} Merchant: {merchants[selected_row_index]['name']}, Amount: {selected_transaction['amount']}", style={'cursor': 'pointer'}),
+            dash_table.DataTable(
+                data=[
+                    {'Attribute': 'Merchant Name', 'Value': merchants[selected_row_index]['name']},
+                    {'Attribute': 'Amount', 'Value': selected_transaction['amount']},
+                    {'Attribute': 'User', 'Value': selected_transaction['user']},
+                    {'Attribute': 'Card', 'Value': selected_transaction['card']},
+                    {'Attribute': 'Date', 'Value': f"{int(selected_transaction['year'])}-{int(selected_transaction['month'])}-{int(selected_transaction['day'])}"},
+                    {'Attribute': 'Transaction Type', 'Value': selected_transaction['use chip']},
+                    {'Attribute': 'Merchant City', 'Value': selected_transaction['merchant city']},
+                    {'Attribute': 'Merchant State', 'Value': selected_transaction['merchant state']},
+                    {'Attribute': 'ZIP', 'Value': selected_transaction['zip']},
+                    {'Attribute': 'Errors', 'Value': selected_transaction['errors?']},
+                    {'Attribute': 'Fraud Prediction', 'Value': str(predict_data)} # predict_result[0]['data']
+                ],
+                columns=[{'name': i, 'id': i} for i in ['Attribute', 'Value']],
+                style_table={'overflowX': 'auto'},
+                style_cell={
+                    'height': 'auto',
+                    'minWidth': '150px', 'width': '150px', 'maxWidth': '150px',
+                    'whiteSpace': 'normal'
+                },
+                style_header={
+                    'fontWeight': 'bold',
+                    'textAlign': 'left'
+                },
+                style_data_conditional=[
+                    {
+                        'if': {'column_id': 'Attribute'},
+                        'textAlign': 'left'
+                    },
+                    {
+                        'if': {'column_id': 'Value'},
+                        'textAlign': 'right'
+                    }
+                ]
+            )
+        ], style={'marginTop': '20px'})
+
+        # Append the new transaction to the existing output
+        updated_output = existing_output + [new_transaction_detail]
+        
+            # Set a flag or a timestamp to indicate a new report was generated
+        fraud_report_generated_flag = str(datetime.now())
+        
+        return updated_output, fraud_report_generated_flag
+    
     except Exception as e:
         dash.exceptions.PreventUpdate(f"Error occured while running inference: {e}")
     
-    # Create the new transaction detail as a collapsible element
-    new_transaction_detail = html.Details([
-        html.Summary(f"ID: {selected_row_index} Merchant: {merchants[selected_row_index]['name']}, Amount: {selected_transaction['amount']}", style={'cursor': 'pointer'}),
-        dash_table.DataTable(
-            data=[
-                {'Attribute': 'Merchant Name', 'Value': merchants[selected_row_index]['name']},
-                {'Attribute': 'Amount', 'Value': selected_transaction['amount']},
-                {'Attribute': 'User', 'Value': selected_transaction['user']},
-                {'Attribute': 'Card', 'Value': selected_transaction['card']},
-                {'Attribute': 'Date', 'Value': f"{int(selected_transaction['year'])}-{int(selected_transaction['month'])}-{int(selected_transaction['day'])}"},
-                {'Attribute': 'Transaction Type', 'Value': selected_transaction['use chip']},
-                {'Attribute': 'Merchant City', 'Value': selected_transaction['merchant city']},
-                {'Attribute': 'Merchant State', 'Value': selected_transaction['merchant state']},
-                {'Attribute': 'ZIP', 'Value': selected_transaction['zip']},
-                {'Attribute': 'Errors', 'Value': selected_transaction['errors?']},
-                {'Attribute': 'Fraud Prediction', 'Value': predict_data} # predict_result[0]['data']
-            ],
-            columns=[{'name': i, 'id': i} for i in ['Attribute', 'Value']],
-            style_table={'overflowX': 'auto'},
-            style_cell={
-                'height': 'auto',
-                'minWidth': '150px', 'width': '150px', 'maxWidth': '150px',
-                'whiteSpace': 'normal'
-            },
-            style_header={
-                'fontWeight': 'bold',
-                'textAlign': 'left'
-            },
-            style_data_conditional=[
-                {
-                    'if': {'column_id': 'Attribute'},
-                    'textAlign': 'left'
-                },
-                {
-                    'if': {'column_id': 'Value'},
-                    'textAlign': 'right'
-                }
-            ]
-        )
-    ], style={'marginTop': '20px'})
-
-    # Append the new transaction to the existing output
-    updated_output = existing_output + [new_transaction_detail]
-    
-        # Set a flag or a timestamp to indicate a new report was generated
-    fraud_report_generated_flag = str(datetime.now())
-    
-    return updated_output, fraud_report_generated_flag
 
 @app.callback(
     Output('generate-output', 'children', allow_duplicate=True),
