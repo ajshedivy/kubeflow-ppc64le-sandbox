@@ -225,8 +225,7 @@ buttonsPanel = (
     dbc.Row(
         [
             # dbc.Col(upload_button),
-            dbc.Col(generate_button),
-            dbc.Col(export_button),
+            dbc.Col(generate_button)
         ]
     )
     if configs_dict["show_upload"] in ["true", "True"]
@@ -650,6 +649,8 @@ def update_output(n_clicks, existing_output, selected_rows):
 )
 def clear_transactions(n_clicks):
     # Return an empty list to clear the transactions
+    transactions_df["Tested"] = False
+        
     return []
 
 
