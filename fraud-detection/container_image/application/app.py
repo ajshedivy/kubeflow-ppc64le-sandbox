@@ -21,6 +21,10 @@ from tensorflow import keras
 import dash
 from dash import Input, Output, State, dash_table, dcc, html
 
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
 # ------- Model Params -------
 
 MODEL_NAME = "fraud-detection-fd6e7"
