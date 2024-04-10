@@ -584,7 +584,7 @@ def update_output(n_clicks, existing_output, selected_rows):
     try:
         predict_result = do_predict(selected_transaction)
         logging.info(f"predict results: {predict_result}")
-        predict_data = predict_result[0]['data'][0]
+        predict_data = predict_result['outputs'][0]['data'][0]
         logging.info(f"predict score: {predict_data}")
         prediction_results[selected_row_index] = predict_data
 
