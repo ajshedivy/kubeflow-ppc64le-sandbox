@@ -526,6 +526,7 @@ def update_table_style(fraud_report_status, selected_rows, style):
             transactions_df.at[selected_row_index, 'Tested'] = True
 
             # Generating a random fraud confidence interval for demonstration
+            logging.info(f"current prediction results: {prediction_results}")
             fraud_confidence = prediction_results.get(selected_row_index, -1)
 
             # Determine the color based on fraud_confidence
@@ -584,60 +585,60 @@ def update_output(n_clicks, existing_output, selected_rows):
         predict_result = do_predict(selected_transaction)
         logging.info(f"predict results: {predict_result}")
         predict_data = predict_result[0]['data'][0]
-        print(f"predict score: {predict_data}")
+        logging.info(f"predict score: {predict_data}")
         prediction_results[selected_row_index] = predict_data
-        # Create the new transaction detail as a collapsible element
-        new_transaction_detail = html.Details([
-            html.Summary(f"ID: {selected_row_index} Merchant: {merchants[selected_row_index]['name']}, Amount: {selected_transaction['amount']}", style={'cursor': 'pointer'}),
-            dash_table.DataTable(
-                data=[
-                    {'Attribute': 'Merchant Name', 'Value': merchants[selected_row_index]['name']},
-                    {'Attribute': 'Amount', 'Value': selected_transaction['amount']},
-                    {'Attribute': 'User', 'Value': selected_transaction['user']},
-                    {'Attribute': 'Card', 'Value': selected_transaction['card']},
-                    {'Attribute': 'Date', 'Value': f"{int(selected_transaction['year'])}-{int(selected_transaction['month'])}-{int(selected_transaction['day'])}"},
-                    {'Attribute': 'Transaction Type', 'Value': selected_transaction['use chip']},
-                    {'Attribute': 'Merchant City', 'Value': selected_transaction['merchant city']},
-                    {'Attribute': 'Merchant State', 'Value': selected_transaction['merchant state']},
-                    {'Attribute': 'ZIP', 'Value': selected_transaction['zip']},
-                    {'Attribute': 'Errors', 'Value': selected_transaction['errors?']},
-                    {'Attribute': 'Fraud Prediction', 'Value': str(predict_data)} # predict_result[0]['data']
-                ],
-                columns=[{'name': i, 'id': i} for i in ['Attribute', 'Value']],
-                style_table={'overflowX': 'auto'},
-                style_cell={
-                    'height': 'auto',
-                    'minWidth': '150px', 'width': '150px', 'maxWidth': '150px',
-                    'whiteSpace': 'normal'
-                },
-                style_header={
-                    'fontWeight': 'bold',
-                    'textAlign': 'left'
-                },
-                style_data_conditional=[
-                    {
-                        'if': {'column_id': 'Attribute'},
-                        'textAlign': 'left'
-                    },
-                    {
-                        'if': {'column_id': 'Value'},
-                        'textAlign': 'right'
-                    }
-                ]
-            )
-        ], style={'marginTop': '20px'})
 
-        # Append the new transaction to the existing output
-        updated_output = existing_output + [new_transaction_detail]
-        
-            # Set a flag or a timestamp to indicate a new report was generated
-        fraud_report_generated_flag = str(datetime.now())
-        
-        return updated_output, fraud_report_generated_flag
-    
     except Exception as e:
         dash.exceptions.PreventUpdate(f"Error occured while running inference: {e}")
     
+    # Create the new transaction detail as a collapsible element
+    new_transaction_detail = html.Details([
+        html.Summary(f"ID: {selected_row_index} Merchant: {merchants[selected_row_index]['name']}, Amount: {selected_transaction['amount']}", style={'cursor': 'pointer'}),
+        dash_table.DataTable(
+            data=[
+                {'Attribute': 'Merchant Name', 'Value': merchants[selected_row_index]['name']},
+                {'Attribute': 'Amount', 'Value': selected_transaction['amount']},
+                {'Attribute': 'User', 'Value': selected_transaction['user']},
+                {'Attribute': 'Card', 'Value': selected_transaction['card']},
+                {'Attribute': 'Date', 'Value': f"{int(selected_transaction['year'])}-{int(selected_transaction['month'])}-{int(selected_transaction['day'])}"},
+                {'Attribute': 'Transaction Type', 'Value': selected_transaction['use chip']},
+                {'Attribute': 'Merchant City', 'Value': selected_transaction['merchant city']},
+                {'Attribute': 'Merchant State', 'Value': selected_transaction['merchant state']},
+                {'Attribute': 'ZIP', 'Value': selected_transaction['zip']},
+                {'Attribute': 'Errors', 'Value': selected_transaction['errors?']},
+                {'Attribute': 'Fraud Prediction', 'Value': str(predict_data)} # predict_result[0]['data']
+            ],
+            columns=[{'name': i, 'id': i} for i in ['Attribute', 'Value']],
+            style_table={'overflowX': 'auto'},
+            style_cell={
+                'height': 'auto',
+                'minWidth': '150px', 'width': '150px', 'maxWidth': '150px',
+                'whiteSpace': 'normal'
+            },
+            style_header={
+                'fontWeight': 'bold',
+                'textAlign': 'left'
+            },
+            style_data_conditional=[
+                {
+                    'if': {'column_id': 'Attribute'},
+                    'textAlign': 'left'
+                },
+                {
+                    'if': {'column_id': 'Value'},
+                    'textAlign': 'right'
+                }
+            ]
+        )
+    ], style={'marginTop': '20px'})
+
+    # Append the new transaction to the existing output
+    updated_output = existing_output + [new_transaction_detail]
+    
+        # Set a flag or a timestamp to indicate a new report was generated
+    fraud_report_generated_flag = str(datetime.now())
+    
+    return updated_output, fraud_report_generated_flag
 
 @app.callback(
     Output('generate-output', 'children', allow_duplicate=True),
