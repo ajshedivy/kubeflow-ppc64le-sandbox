@@ -307,7 +307,7 @@ horizontal_layout = dbc.Row(
         dbc.Col(className="col-1"),  # Margin on the left
         dbc.Col(
             children=[
-                html.H5(configs_dict["Input_title"]),
+                html.H5("🗃️Transactions"),
                 html.Div(
                     transaction_data,
                     style={
@@ -326,7 +326,7 @@ horizontal_layout = dbc.Row(
             children=[
                 html.Div(
                     [
-                        html.H5(configs_dict["output_title"]),  # Output title
+                        html.H5("📋Fraud Detection Reports"),  # Output title
                         html.Div(
                             [
                                 dbc.Label("Model ID"),
@@ -590,10 +590,13 @@ def update_output(n_clicks, existing_output, selected_rows):
 
     except Exception as e:
         dash.exceptions.PreventUpdate(f"Error occured while running inference: {e}")
+        
+    
+    fraud_icon = "✅" if predict_data < 0.5 else "⚠️"
     
     # Create the new transaction detail as a collapsible element
     new_transaction_detail = html.Details([
-        html.Summary(f"ID: {selected_row_index} Merchant: {merchants[selected_row_index]['name']}, Amount: {selected_transaction['amount']}", style={'cursor': 'pointer'}),
+        html.Summary(f"📝Additional Transaction Info - ID: {selected_row_index} {fraud_icon}", style={'cursor': 'pointer'}),
         dash_table.DataTable(
             data=[
                 {'Attribute': 'Merchant Name', 'Value': merchants[selected_row_index]['name']},
